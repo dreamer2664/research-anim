@@ -1,0 +1,551 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spring vs tween, same target · REEL 02</title>
+<!-- GENERATED FILE — edit tools/gen_reel_02.py, not this. -->
+<style>
+:root{
+  --bg:#0b0f14; --panel:#131a22; --panel2:#0f151c; --line:#26303b;
+  --ink:#e6edf3; --dim:#8b98a5; --faint:#5b6673;
+  --c1:#58a6ff; --c2:#3fb950; --c3:#f0883e; --bad:#f85149;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  padding:28px 20px 64px;
+}
+main{max-width:960px;margin:0 auto}
+header.top{border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:22px}
+.series{font:600 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+h1{font-size:23px;line-height:1.25;margin:8px 0 6px;font-weight:650;letter-spacing:-.01em}
+.lede{color:var(--dim);margin:0;max-width:70ch}
+h2{font-size:14px;margin:30px 0 10px;font-weight:640;letter-spacing:.02em;
+   text-transform:uppercase;color:var(--dim);font-family:var(--mono)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.panel.tight{padding:12px 14px}
+
+/* controls */
+.controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:20px 0 4px}
+button{
+  font:600 13px/1 inherit;color:var(--ink);background:#1c2632;
+  border:1px solid #35424f;border-radius:7px;padding:8px 13px;cursor:pointer;
+}
+button:hover{background:#243040}
+button:active{transform:translateY(1px)}
+button.secondary{background:transparent;color:var(--dim)}
+input[type=range]{flex:1;min-width:140px;accent-color:var(--c1)}
+.hint{color:var(--faint);font:12px/1.4 var(--mono)}
+
+/* a track: one moving subject on a shared rail */
+.track{position:relative;height:44px;margin:6px 0 2px;
+  background:linear-gradient(90deg,#0d141b,#0d141b) padding-box;border-radius:7px;
+  border:1px solid #1b232d;overflow:visible}
+.rail{position:absolute;left:0;right:0;top:50%;height:1px;background:#243040}
+.dot{position:absolute;top:50%;width:22px;height:22px;margin:-11px 0 0 0;border-radius:50%;
+  will-change:transform;box-shadow:0 0 0 1px rgba(0,0,0,.5)}
+.goal{position:absolute;top:50%;width:1px;height:26px;margin-top:-13px;background:#3a4756}
+
+/* readout grid */
+.rows{display:grid;grid-template-columns:minmax(140px,1.05fr) repeat(3,minmax(64px,.62fr)) 1.1fr;
+  gap:0 10px;align-items:center}
+.rows .head{font:600 10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--faint);padding:4px 0}
+.rows .cell{font:13px/1 var(--mono);color:var(--ink);padding:9px 0;border-top:1px solid #1b232d}
+.rows .label{display:flex;align-items:center;gap:8px;font-weight:600}
+.swatch{width:9px;height:9px;border-radius:2px;flex:none}
+.code{font-family:var(--mono);font-size:11px;color:var(--dim)}
+.bar{position:relative;height:6px;background:#1b232d;border-radius:3px;overflow:hidden}
+.bar > i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;width:0}
+.stack{display:flex;flex-direction:column;gap:2px}
+.stack small{font:11px/1.2 var(--mono);color:var(--faint)}
+
+/* legend + callouts */
+.legend{display:flex;gap:16px;flex-wrap:wrap;color:var(--dim);font:12px/1.4 var(--mono);margin-top:10px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.note{border-left:2px solid var(--c1);padding:2px 0 2px 12px;color:var(--dim);
+  margin:18px 0;max-width:74ch}
+.note.warn{border-left-color:var(--c3)}
+.note b{color:var(--ink);font-weight:640}
+.watch{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:9px}
+.watch li{position:relative;padding-left:18px;color:var(--dim);max-width:78ch}
+.watch li::before{content:"";position:absolute;left:2px;top:8px;width:6px;height:6px;
+  border-radius:50%;background:var(--c1);opacity:.75}
+.watch b{color:var(--ink)}
+svg{display:block;overflow:visible}
+figcaption{color:var(--faint);font:11px/1.5 var(--mono);margin-top:8px}
+footer{margin-top:34px;padding-top:14px;border-top:1px solid var(--line);
+  color:var(--faint);font:11px/1.6 var(--mono);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+footer a{color:var(--dim);text-decoration:none;border-bottom:1px dotted #3a4756}
+@media (max-width:640px){
+  .rows{grid-template-columns:1fr 1fr}
+  .rows .head:nth-child(4),.rows .cell:nth-child(4){display:none}
+}
+.tr{display:grid;grid-template-columns:212px 1fr 190px;gap:14px;align-items:center;padding:9px 0}
+.tr + .tr{border-top:1px solid #1b232d}
+.tr .name{display:flex;gap:9px;align-items:flex-start;font-size:13px}
+.tr .name b{font-weight:640}
+.tr .swatch{margin-top:5px}
+.stack small{font:11px/1.35 var(--mono);color:var(--faint);white-space:nowrap}
+.stack small b{color:var(--ink);font-weight:600}
+.chip{display:inline-block;font:600 10px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;
+  padding:3px 6px;border-radius:4px;border:1px solid #35424f;color:var(--dim)}
+.chip.hot{color:var(--c3);border-color:#5a3a1c}
+.chip.cold{color:var(--c2);border-color:#1f4d2e}
+.rows.measured .cell{padding:11px 0;font-size:12.5px}
+.rows.measured .label{font-size:13px}
+.band{fill:#58a6ff;opacity:.07}
+@media (max-width:640px){ .tr{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<main>
+<header class="top">
+  <div class="series">REEL · research-anim · study 02</div>
+  <h1>Spring vs tween, same target</h1>
+  <p class="lede">A damped spring, solved in closed form, against a fixed 700&nbsp;ms bezier tween, pulling the same dot across the same rail. Same target, same weight; different answer to &ldquo;what happens after it arrives&rdquo;.</p>
+</header>
+
+
+<div class="controls">
+  <button id="play">Pause</button>
+  <button id="flip" class="secondary">Flip the target mid-flight</button>
+  <input id="scrub" type="range" min="0" max="1000" value="0" step="1"
+         aria-label="scrub the 2000 ms cycle">
+  <span class="hint" id="clock">t = 0.000 &middot; 0 / 2000 ms</span>
+</div>
+
+<section class="panel">
+  <div id="stage"></div>
+  <div class="legend">
+    <span>spring: m = 1, k = 120, c = 14 &nbsp;&rarr;&nbsp; &omega;&#8320; = 10.95 rad/s, &zeta; = 0.639, f<sub>d</sub> = 1.34 Hz</span>
+    <span>tween: cubic-bezier(.22,1,.36,1) over 700 ms</span>
+  </div>
+</section>
+
+<h2>Measured, not asserted</h2>
+<section class="panel tight">
+  <div class="rows measured" id="metrics">
+    <div class="head">driver</div>
+    <div class="head">settles</div>
+    <div class="head">overshoot</div>
+    <div class="head">peak speed</div>
+    <div class="head">after the end</div>
+  </div>
+  <p class="hint" id="metric-note" style="margin:12px 0 0"></p>
+</section>
+
+<h2>Position against time</h2>
+<figure class="panel tight" style="margin:0">
+  <svg id="plot" viewBox="0 0 720 240" width="100%" role="img"
+       aria-label="position against time for the spring and the tween"></svg>
+  <figcaption>nominal run: rest at 0, target at 1 &nbsp;&middot;&nbsp; shaded band = &plusmn;0.5%
+    of the rail &nbsp;&middot;&nbsp; dashed vertical = the moment each driver is inside it for good</figcaption>
+</figure>
+
+<h2>What to watch</h2>
+<ul class="watch">
+  <li><b>Overshoot is quantified, not tuned.</b> &zeta; = 0.64 predicts an overshoot of
+      exp(&minus;&zeta;&pi;/&radic;(1&minus;&zeta;&sup2;)) = 7.35%; the closed form reports 7.354%
+      at 373&nbsp;ms &mdash; the two agree to three decimals, which is what an exact solution
+      of a linear oscillator should do. The bezier tween cannot overshoot at all &mdash; its control points are
+      pinned inside the box &mdash; so "springy" and "tweened" are distinguishable by
+      measurement, not by taste.</li>
+  <li><b>The tails differ in kind.</b> Every half cycle the spring keeps 7.35% of the previous
+      deviation: +7.3%, then &minus;0.54%, then +0.04%. It is inside &plusmn;0.5% at 785&nbsp;ms
+      and inside &plusmn;0.1% at 943&nbsp;ms &mdash; and to be inside &plusmn;0.01% takes
+      1299&nbsp;ms. Any stricter definition just buys another half cycle. The tween is done at 700&nbsp;ms, exactly, forever.
+      A spring has no end; a tween has nothing but an end.</li>
+  <li><b>Flip the target mid-flight.</b> Press the button while both dots are moving. The spring
+      keeps its velocity through the retarget and turns around on a curve; the tween has no
+      velocity to keep &mdash; it restarts its timing function from wherever it is, so its speed
+      drops to zero in one frame. The restart counter under the right track counts that
+      discontinuity. This is the difference that shows up in real UI and is invisible in a
+      single-run demo.</li>
+  <li><b>Peak speeds are closer than the feel suggests.</b> Spring peaks at 5.28 track/s at 104&nbsp;ms, the
+      tween at 6.49 &mdash; yet the tween reads as the faster of the two, because speed at the
+      end and at the start is what the eye integrates, and the tween spends 700&nbsp;ms
+      accelerating then falling to a dead stop.</li>
+</ul>
+
+<div class="note warn">
+  <b>Where this is not your engine.</b> The spring here is the exact solution of a linear
+  damped oscillator, with no clamping, no rest threshold and no velocity cap. Production
+  spring libraries (iOS <code>UISpringTimingParameters</code>, Framer Motion, react-spring)
+  integrate numerically and add a rest threshold and a maximum duration; those change the
+  settle time you measure, not the shape. <code>tools/measure.py</code> runs the same
+  parameters through a 2&nbsp;kHz semi-implicit Euler and reports where it lands &mdash; up to
+  0.21% of the rail off, and 5&nbsp;ms early on the &plusmn;0.5% crossing. The tween assumes
+  a re-target resets the timing function and drops velocity &mdash; true of CSS transitions
+  and of most JS tweeners, false of engines that blend velocities across retargets.
+</div>
+
+<footer>
+  <span>REEL 02 · spring vs tween · generated by tools/gen_reel_02.py</span>
+  <span><a href="index.html">← all reels</a> · <code>?still=1&amp;t=0.42</code> freezes a frame</span>
+</footer>
+</main>
+<script>
+
+const REEL = (() => {
+  // --- cubic-bezier(x1,y1,x2,y2) as a timing function -------------------
+  // CSS defines it parametrically: x(u), y(u) are cubics with control points
+  // (0,0),(x1,y1),(x2,y2),(1,1). We need y for a given x, i.e. solve
+  // x(u) = progress for u, then evaluate y(u).
+  const A = (a,b) => 1 - 3*b + 3*a;
+  const B = (a,b) => 3*b - 6*a;
+  const C = a => 3*a;
+  const calc = (u,a,b) => ((A(a,b)*u + B(a,b))*u + C(a))*u;
+  const slope = (u,a,b) => 3*A(a,b)*u*u + 2*B(a,b)*u + C(a);
+
+  function solve(x, x1, x2){
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    let u = x;
+    // Newton-Raphson: fast where the curve is well behaved.
+    for (let i = 0; i < 8; i++){
+      const s = slope(u, x1, x2);
+      if (Math.abs(s) < 1e-7) break;
+      const err = calc(u, x1, x2) - x;
+      if (Math.abs(err) < 1e-7) return u;
+      u -= err / s;
+      if (u < 0 || u > 1) break;
+    }
+    // Bisection fallback: slow but always converges.
+    let lo = 0, hi = 1; u = x;
+    for (let i = 0; i < 60; i++){
+      const v = calc(u, x1, x2);
+      if (Math.abs(v - x) < 1e-9) break;
+      if (v < x) lo = u; else hi = u;
+      u = (lo + hi) / 2;
+    }
+    return u;
+  }
+
+  // y at parameter x, plus dy/dx (the curve's *speed* at that instant).
+  function bezier(x, x1, y1, x2, y2){
+    const u = solve(x, x1, x2);
+    const dx = slope(u, x1, x2);
+    const dy = slope(u, y1, y2);
+    return { y: calc(u, y1, y2), slope: Math.abs(dx) < 1e-7 ? 0 : dy / dx };
+  }
+
+  // Max |dy/dx| over the whole curve — used to scale speed bars.
+  function maxSlope(x1, y1, x2, y2){
+    let m = 0;
+    for (let i = 0; i <= 2000; i++) m = Math.max(m, Math.abs(bezier(i/2000, x1,y1,x2,y2).slope));
+    return m || 1;
+  }
+
+  // Sample the curve as [x,y] pairs for plotting.
+  function samples(x1, y1, x2, y2, n = 120){
+    const out = [];
+    for (let i = 0; i <= n; i++){
+      const x = i / n;
+      out.push([x, bezier(x, x1, y1, x2, y2).y]);
+    }
+    return out;
+  }
+
+  // Interpolate a (time,value) table; linear between keys, clamped outside.
+  // This is what "in-betweening" means when the in-betweens are computed by
+  // a person (or a naive engine) rather than by a curve.
+  function polyline(keys, t){
+    if (t <= keys[0][0]) return keys[0][1];
+    const last = keys[keys.length - 1];
+    if (t >= last[0]) return last[1];
+    for (let i = 1; i < keys.length; i++){
+      const [t0,v0] = keys[i-1], [t1,v1] = keys[i];
+      if (t <= t1){
+        const f = (t - t0) / (t1 - t0);
+        return v0 + (v1 - v0) * f;
+      }
+    }
+    return last[1];
+  }
+
+  // Closed-form damped harmonic oscillator, re-based on every retarget.
+  //
+  //   m x'' + c (x' ) + k (x - T) = 0
+  //   w0 = sqrt(k/m), zeta = c / (2 sqrt(k m)), wd = w0 sqrt(1 - zeta^2)
+  //   x(t) = T + e^(-zeta w0 t) (A cos(wd t) + B sin(wd t))
+  //   A = x0 - T,  B = (v0 + zeta w0 A) / wd
+  //
+  // Exact in continuous time, so the printed numbers are properties of the
+  // parameters and not of a step size. tools/measure.py quantifies what a
+  // 2 kHz numerical integrator would have produced instead.
+  function spring(m, k, c){
+    const w0 = Math.sqrt(k / m);
+    const zeta = c / (2 * Math.sqrt(k * m));
+    const wd = w0 * Math.sqrt(1 - zeta * zeta);
+    const lam = zeta * w0;
+    function at(x0, v0, target, ms){
+      const t = Math.max(0, ms) / 1000;
+      const e = Math.exp(-lam * t);
+      const A = x0 - target, B = (v0 + lam * A) / wd;
+      const cos = Math.cos(wd * t), sin = Math.sin(wd * t);
+      return {
+        x: target + e * (A * cos + B * sin),
+        v: e * ((B * wd - lam * A) * cos - (A * wd + lam * B) * sin),
+      };
+    }
+    return {w0, zeta, wd, lam, at};
+  }
+
+  // Query string: ?still=1&t=0.42 paints one deterministic frame.
+  const q = new URLSearchParams(location.search);
+  const still = q.get('still') === '1';
+  const stillT = Math.max(0, Math.min(1, parseFloat(q.get('t') || '0.35')));
+
+  const nf = (v, d = 2) => (Math.abs(v) < 5e-5 ? 0 : v).toFixed(d);
+  const pct = v => (v * 100).toFixed(1) + '%';
+  const byId = id => document.getElementById(id);
+
+  return {bezier, maxSlope, samples, polyline, spring,
+          still, stillT, nf, pct, byId,
+          reduceMotion: matchMedia('(prefers-reduced-motion: reduce)').matches};
+})();
+
+
+// ---- model -------------------------------------------------------------
+const M = 1, K = 120, C = 14;      // mass, stiffness, damping
+const TW = 700;                    // tween duration, ms
+const TB = [0.22, 1, 0.36, 1];     // tween control points
+const BAND = 0.005;                // "settled" = inside 0.5% of the rail
+const CYCLE = 2000, HOLD = 400;    // replay length, ms of rest before looping
+const PAD = 72, DOT = 22;
+
+const SP = REEL.spring(M, K, C);         // exact solution, see tools/reelkit.py
+const springAt = (x0, v0, target, ms) => SP.at(x0, v0, target, ms);
+const tweenAt = (from, to, ms) => {
+  const f = Math.max(0, Math.min(1, ms / TW));
+  const b = REEL.bezier(f, TB[0], TB[1], TB[2], TB[3]);
+  return {x: from + (to - from) * b.y, v: b.slope * (to - from) / (TW / 1000)};
+};
+
+// ---- nominal run, measured once ----------------------------------------
+// Sampled every 1 ms so the printed metrics are a property of (m, k, c) and
+// not of the sampling: at 2 kHz+ the same table comes out to 3 decimals.
+const NOM = {pos:[], vel:[]};
+for (let i = 0; i <= 2400; i++){ const p = springAt(0, 0, 1, i); NOM.pos.push(p.x); NOM.vel.push(p.v); }
+(function measure(){
+  let peak = 0, peakAt = 0;
+  for (let i = 0; i <= 2400; i++) if (NOM.pos[i] > peak){ peak = NOM.pos[i]; peakAt = i; }
+  let lastOut = 0, speed = 0;
+  for (let i = 0; i <= 2400; i++){
+    if (Math.abs(NOM.pos[i] - 1) > BAND) lastOut = i;
+    speed = Math.max(speed, Math.abs(NOM.vel[i]));
+  }
+  let lastOutTight = 0;
+  for (let i = 0; i <= 2400; i++) if (Math.abs(NOM.pos[i] - 1) > 0.001) lastOutTight = i;
+
+  let tspeed = 0;
+  for (let i = 0; i <= 200; i++) tspeed = Math.max(tspeed, Math.abs(tweenAt(0, 1, i / 200 * TW).v));
+
+  window.MEASURED = {
+    spring: {peak:peak, peakAt:peakAt, settle:lastOut + 1, settleTight:lastOutTight + 1, speed:speed,
+             endSpeed:NOM.vel[2400], endPos:NOM.pos[2400]},
+    tween:  {peak:1, peakAt:TW, settle:TW, settleTight:TW, speed:tspeed, endSpeed:0, endPos:1},
+  };
+
+  const m = window.MEASURED;
+  const row = (name, colour, a, b, c, d) =>
+    '<div class="cell label"><span class="swatch" style="background:' + colour + '"></span>' + name + '</div>' +
+    '<div class="cell">' + a + '</div><div class="cell">' + b + '</div>' +
+    '<div class="cell">' + c + '</div><div class="cell">' + d + '</div>';
+  const box = REEL.byId('metrics');
+  box.insertAdjacentHTML('beforeend',
+    row('spring', '#3fb950',
+        m.spring.settle + ' ms',
+        '+' + REEL.nf((m.spring.peak - 1) * 100, 2) + '%',
+        REEL.nf(m.spring.speed, 2) + ' tr/s',
+        'asymptote, never exactly 1') +
+    row('tween', '#58a6ff',
+        TW + ' ms, exact',
+        '0.00%',
+        REEL.nf(m.tween.speed, 2) + ' tr/s',
+        'exactly 1, speed 0'));
+  REEL.byId('metric-note').textContent =
+    'closed-form solution, sampled at 1 ms · spring is inside ±0.1% at ' +
+    m.spring.settleTight + ' ms · peak overshoot at ' + m.spring.peakAt +
+    ' ms · peak speed at 104 ms';
+})();
+
+// ---- stage -------------------------------------------------------------
+const stage = REEL.byId('stage');
+function makeTrack(name, spec, colour){
+  const row = document.createElement('div');
+  row.className = 'tr';
+  row.innerHTML =
+    '<div class="name"><span class="swatch" style="background:' + colour + '"></span>' +
+      '<span><b>' + name + '</b><br><span class="code">' + spec + '</span></span></div>' +
+    '<div class="track"><div class="rail"></div><div class="goal"></div>' +
+      '<div class="dot" style="background:' + colour + '"></div></div>' +
+    '<div class="stack">' +
+      '<small>position <b class="pv">0.0%</b> <span class="chip cold st">rest</span></small>' +
+      '<div class="bar"><i style="background:' + colour + '"></i></div>' +
+      '<small>speed <b class="sv">0.00</b> tr/s <span class="x"></span></small>' +
+    '</div>';
+  stage.appendChild(row);
+  return {
+    dot: row.querySelector('.dot'), goal: row.querySelector('.goal'),
+    pv: row.querySelector('.pv'), sv: row.querySelector('.sv'),
+    bar: row.querySelector('.bar > i'), chip: row.querySelector('.chip'),
+    extra: row.querySelector('.x'), track: row.querySelector('.track'),
+    travel: 100,
+  };
+}
+const S = makeTrack('spring', 'm1 · k120 · c14 · exact', '#3fb950');
+const T = makeTrack('tween', 'cubic-bezier(.22,1,.36,1)', '#58a6ff');
+
+const vScale = Math.max(window.MEASURED.spring.speed, window.MEASURED.tween.speed);
+
+function geometry(){
+  [S, T].forEach(r => {
+    r.travel = Math.max(60, r.track.clientWidth - DOT - 2 * PAD);
+    r.dot.style.left = PAD + 'px';
+    r.goal.style.left = (PAD + r.travel + DOT / 2) + 'px';
+  });
+}
+
+// ---- plot --------------------------------------------------------------
+const plot = REEL.byId('plot');
+const L = 64, R = 700, TOP = 20, BOT = 196, VMIN = -0.03, VMAX = 1.12;
+const PX = ms => L + (ms / CYCLE) * (R - L);
+const PY = v => BOT - (v - VMIN) / (VMAX - VMIN) * (BOT - TOP);
+const svg = (n, a) => { const e = document.createElementNS('http://www.w3.org/2000/svg', n);
+  for (const k in a) e.setAttribute(k, a[k]); return e; };
+(function axes(){
+  plot.appendChild(svg('rect', {x:L, y:PY(1 + BAND), width:R - L,
+    height:Math.max(1.5, PY(1 - BAND) - PY(1 + BAND)), class:'band'}));
+  plot.appendChild(svg('line', {x1:L, y1:BOT, x2:R, y2:BOT, stroke:'#26303b'}));
+  plot.appendChild(svg('line', {x1:L, y1:TOP, x2:L, y2:BOT, stroke:'#26303b'}));
+  plot.appendChild(svg('line', {x1:L, y1:PY(1), x2:R, y2:PY(1), stroke:'#3a4756', 'stroke-dasharray':'4 4'}));
+  [[0,'0'],[0.5,'0.5'],[1,'1']].forEach(([v, t]) => {
+    const e = svg('text', {x:L - 8, y:PY(v) + 4, fill:'#5b6673', 'font-size':'10',
+      'text-anchor':'end', 'font-family':'ui-monospace,monospace'});
+    e.textContent = t; plot.appendChild(e);
+  });
+  [[0,'0'],[1000,'1.0s'],[2000,'2.0s']].forEach(([ms, t]) => {
+    const e = svg('text', {x:PX(ms), y:BOT + 16, fill:'#5b6673', 'font-size':'10',
+      'text-anchor':'middle', 'font-family':'ui-monospace,monospace'});
+    e.textContent = t; plot.appendChild(e);
+  });
+  [[window.MEASURED.spring.settle, '#3fb950'], [window.MEASURED.tween.settle, '#58a6ff']]
+    .forEach(([ms, colour]) => plot.appendChild(svg('line', {x1:PX(ms), y1:TOP, x2:PX(ms),
+      y2:BOT, stroke:colour, 'stroke-dasharray':'3 4', opacity:0.55})));
+})();
+
+const springPts = [];
+for (let i = 0; i <= CYCLE; i += 2) springPts.push([i, NOM.pos[i]]);
+const tweenPts  = [];
+for (let i = 0; i <= CYCLE; i += 2) tweenPts.push([i, tweenAt(0, 1, Math.min(i, TW)).x]);
+[[springPts, '#00693f00', '#3fb950'], [tweenPts, '#0057a300', '#58a6ff']].forEach(([pts, _, colour]) => {
+  const d = pts.map((q, i) => (i ? 'L' : 'M') + PX(q[0]).toFixed(1) + ' ' + PY(q[1]).toFixed(1)).join(' ');
+  plot.appendChild(svg('path', {d, fill:'none', stroke:colour, 'stroke-width':1.9, 'stroke-linecap':'round'}));
+});
+const mSpring = svg('circle', {r:4.5, fill:'#3fb950', stroke:'#0b0f14', 'stroke-width':1.5});
+const mTween  = svg('circle', {r:4.5, fill:'#58a6ff', stroke:'#0b0f14', 'stroke-width':1.5});
+plot.appendChild(mSpring); plot.appendChild(mTween);
+
+// ---- run state ---------------------------------------------------------
+// spr describes the *current leg* of the spring: it is re-based on retarget,
+// which is exactly how a real spring keeps its velocity.
+let spr = {x0:0, v0:0, target:1, t0:0};
+let tw  = {from:0, to:1, t0:0, restarts:0};
+let runT = 0, target = 1, playing = false, clock = 0, last = null, raf = null;
+
+function resetRun(){
+  spr = {x0:0, v0:0, target:1, t0:0};
+  tw = {from:0, to:1, t0:0, restarts:0};
+  target = 1; runT = 0;
+}
+function springNow(t){ return springAt(spr.x0, spr.v0, spr.target, t - spr.t0); }
+function tweenNow(t){ return tweenAt(tw.from, tw.to, t - tw.t0); }
+
+function flip(){
+  const s = springNow(runT), wv = tweenNow(runT);
+  target = target === 1 ? 0 : 1;
+  spr = {x0:s.x, v0:s.v, target:target, t0:runT};   // velocity carried over
+  tw  = {from:wv.x, to:target, t0:runT, restarts:tw.restarts + 1}; // velocity dropped
+  draw(runT);
+}
+
+// ---- render ------------------------------------------------------------
+function draw(t){
+  runT = t;
+  const s = springNow(t), w = tweenNow(t);
+
+  S.dot.style.transform = 'translateX(' + (s.x * S.travel).toFixed(1) + 'px)';
+  S.goal.style.transform = 'translateX(' + ((target - 1) * S.travel).toFixed(1) + 'px)';
+  S.pv.textContent = REEL.pct(s.x);
+  S.sv.textContent = REEL.nf(s.v, 2);
+  S.bar.style.width = Math.min(100, Math.abs(s.v) / vScale * 100).toFixed(1) + '%';
+  const sDone = Math.abs(s.x - target) < BAND && Math.abs(s.v) < 0.05;
+  S.chip.textContent = sDone ? 'settled' : (Math.abs(s.v) < 0.15 ? 'creeping' : 'moving');
+  S.chip.className = 'chip ' + (sDone ? 'cold' : 'hot') + ' st';
+
+  T.dot.style.transform = 'translateX(' + (w.x * T.travel).toFixed(1) + 'px)';
+  T.goal.style.transform = 'translateX(' + ((target - 1) * T.travel).toFixed(1) + 'px)';
+  T.pv.textContent = REEL.pct(w.x);
+  T.sv.textContent = REEL.nf(Math.abs(w.v) < 5e-4 ? 0 : w.v, 2);
+  T.bar.style.width = Math.min(100, Math.abs(w.v) / vScale * 100).toFixed(1) + '%';
+  const tDone = Math.abs(w.x - target) < 1e-6;
+  T.chip.textContent = tDone ? 'arrived' : 'timing';
+  T.chip.className = 'chip ' + (tDone ? 'cold' : 'hot') + ' st';
+  T.extra.textContent = tw.restarts ? '· ' + tw.restarts + ' retarget' + (tw.restarts > 1 ? 's' : '') : '';
+
+  mSpring.setAttribute('cx', PX(t).toFixed(1)); mSpring.setAttribute('cy', PY(s.x).toFixed(1));
+  mTween.setAttribute('cx', PX(t).toFixed(1));  mTween.setAttribute('cy', PY(w.x).toFixed(1));
+  REEL.byId('clock').textContent = 't = ' + (t / CYCLE).toFixed(3) + ' \u00b7 ' + Math.round(t) + ' / ' + CYCLE + ' ms';
+}
+
+// ---- clock -------------------------------------------------------------
+const btn = REEL.byId('play'), scrub = REEL.byId('scrub');
+let prevCyc = 0;
+function tick(now){
+  if (last === null) last = now;
+  const dt = Math.min(now - last, 100);
+  last = now;
+  if (playing){
+    clock += dt;
+    const cyc = clock % (CYCLE + HOLD);
+    if (cyc < prevCyc) resetRun();          // the replay wrapped: back to rest
+    prevCyc = cyc;
+    draw(Math.min(CYCLE, cyc));
+    scrub.value = Math.round(Math.min(1, cyc / CYCLE) * 1000);
+  }
+  raf = requestAnimationFrame(tick);
+}
+function play(){ playing = true; btn.textContent = 'Pause'; if (raf === null){ last = null; raf = requestAnimationFrame(tick); } }
+function pause(){ playing = false; btn.textContent = 'Play'; }
+
+btn.addEventListener('click', () => (playing ? pause() : play()));
+REEL.byId('flip').addEventListener('click', () => { if (runT >= CYCLE) { resetRun(); draw(0); } flip(); });
+scrub.addEventListener('input', () => {
+  pause(); resetRun();
+  const t = Math.min(CYCLE, scrub.value / 1000 * CYCLE);
+  clock = t; prevCyc = t;
+  draw(t);
+});
+addEventListener('keydown', e => {
+  if (e.code === 'Space' && e.target.tagName !== 'INPUT'){ e.preventDefault(); playing ? pause() : play(); }
+  if (e.code === 'KeyF' && e.target.tagName !== 'INPUT'){ e.preventDefault(); flip(); }
+});
+addEventListener('resize', () => { geometry(); draw(runT); });
+
+geometry(); resetRun();
+if (REEL.still || REEL.reduceMotion){
+  pause(); draw(REEL.stillT * CYCLE);
+  scrub.value = Math.round(REEL.stillT * 1000);
+} else {
+  play();
+}
+
+</script>
+</body>
+</html>
