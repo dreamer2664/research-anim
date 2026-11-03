@@ -1,0 +1,505 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Keyframe spacing is the timing · REEL 03</title>
+<!-- GENERATED FILE — edit tools/gen_reel_03.py, not this. -->
+<style>
+:root{
+  --bg:#0b0f14; --panel:#131a22; --panel2:#0f151c; --line:#26303b;
+  --ink:#e6edf3; --dim:#8b98a5; --faint:#5b6673;
+  --c1:#58a6ff; --c2:#3fb950; --c3:#f0883e; --bad:#f85149;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  padding:28px 20px 64px;
+}
+main{max-width:960px;margin:0 auto}
+header.top{border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:22px}
+.series{font:600 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+h1{font-size:23px;line-height:1.25;margin:8px 0 6px;font-weight:650;letter-spacing:-.01em}
+.lede{color:var(--dim);margin:0;max-width:70ch}
+h2{font-size:14px;margin:30px 0 10px;font-weight:640;letter-spacing:.02em;
+   text-transform:uppercase;color:var(--dim);font-family:var(--mono)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.panel.tight{padding:12px 14px}
+
+/* controls */
+.controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:20px 0 4px}
+button{
+  font:600 13px/1 inherit;color:var(--ink);background:#1c2632;
+  border:1px solid #35424f;border-radius:7px;padding:8px 13px;cursor:pointer;
+}
+button:hover{background:#243040}
+button:active{transform:translateY(1px)}
+button.secondary{background:transparent;color:var(--dim)}
+input[type=range]{flex:1;min-width:140px;accent-color:var(--c1)}
+.hint{color:var(--faint);font:12px/1.4 var(--mono)}
+
+/* a track: one moving subject on a shared rail */
+.track{position:relative;height:44px;margin:6px 0 2px;
+  background:linear-gradient(90deg,#0d141b,#0d141b) padding-box;border-radius:7px;
+  border:1px solid #1b232d;overflow:visible}
+.rail{position:absolute;left:0;right:0;top:50%;height:1px;background:#243040}
+.dot{position:absolute;top:50%;width:22px;height:22px;margin:-11px 0 0 0;border-radius:50%;
+  will-change:transform;box-shadow:0 0 0 1px rgba(0,0,0,.5)}
+.goal{position:absolute;top:50%;width:1px;height:26px;margin-top:-13px;background:#3a4756}
+
+/* readout grid */
+.rows{display:grid;grid-template-columns:minmax(140px,1.05fr) repeat(3,minmax(64px,.62fr)) 1.1fr;
+  gap:0 10px;align-items:center}
+.rows .head{font:600 10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--faint);padding:4px 0}
+.rows .cell{font:13px/1 var(--mono);color:var(--ink);padding:9px 0;border-top:1px solid #1b232d}
+.rows .label{display:flex;align-items:center;gap:8px;font-weight:600}
+.swatch{width:9px;height:9px;border-radius:2px;flex:none}
+.code{font-family:var(--mono);font-size:11px;color:var(--dim)}
+.bar{position:relative;height:6px;background:#1b232d;border-radius:3px;overflow:hidden}
+.bar > i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;width:0}
+.stack{display:flex;flex-direction:column;gap:2px}
+.stack small{font:11px/1.2 var(--mono);color:var(--faint)}
+
+/* legend + callouts */
+.legend{display:flex;gap:16px;flex-wrap:wrap;color:var(--dim);font:12px/1.4 var(--mono);margin-top:10px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.note{border-left:2px solid var(--c1);padding:2px 0 2px 12px;color:var(--dim);
+  margin:18px 0;max-width:74ch}
+.note.warn{border-left-color:var(--c3)}
+.note b{color:var(--ink);font-weight:640}
+.watch{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:9px}
+.watch li{position:relative;padding-left:18px;color:var(--dim);max-width:78ch}
+.watch li::before{content:"";position:absolute;left:2px;top:8px;width:6px;height:6px;
+  border-radius:50%;background:var(--c1);opacity:.75}
+.watch b{color:var(--ink)}
+svg{display:block;overflow:visible}
+figcaption{color:var(--faint);font:11px/1.5 var(--mono);margin-top:8px}
+footer{margin-top:34px;padding-top:14px;border-top:1px solid var(--line);
+  color:var(--faint);font:11px/1.6 var(--mono);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+footer a{color:var(--dim);text-decoration:none;border-bottom:1px dotted #3a4756}
+@media (max-width:640px){
+  .rows{grid-template-columns:1fr 1fr}
+  .rows .head:nth-child(4),.rows .cell:nth-child(4){display:none}
+}
+.tr{display:grid;grid-template-columns:212px 1fr 178px;gap:14px;align-items:center;padding:10px 0}
+.tr + .tr{border-top:1px solid #1b232d}
+.tr .name{display:flex;gap:9px;align-items:flex-start;font-size:13px}
+.tr .name b{font-weight:640}
+.tr .swatch{margin-top:5px}
+.stack small{font:11px/1.35 var(--mono);color:var(--faint);white-space:nowrap}
+.stack small b{color:var(--ink);font-weight:600}
+.tick{position:absolute;top:50%;width:1px;height:15px;margin-top:-7px;background:#4a5b6e;opacity:.85}
+.tick.k{background:#7d8b99}
+.dot{transition:none}
+.seg{font:10px/1 var(--mono);color:var(--faint);letter-spacing:.04em}
+@media (max-width:640px){ .tr{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<main>
+<header class="top">
+  <div class="series">REEL · research-anim · study 03</div>
+  <h1>Keyframe spacing is the timing</h1>
+  <p class="lede">One 1800&nbsp;ms move, three key sets, straight-line in-betweens everywhere. Only where the keys sit changes &mdash; and that alone decides whether the move reads as mechanical, hand-drawn, or broken.</p>
+</header>
+
+
+<div class="controls">
+  <button id="play">Pause</button>
+  <input id="scrub" type="range" min="0" max="1000" value="0" step="1"
+         aria-label="scrub the 1800 ms move">
+  <span class="hint" id="clock">t = 0.000 &middot; 0 / 1800 ms</span>
+</div>
+
+<section class="panel">
+  <div id="stage"></div>
+  <div class="legend">
+    <span>1800 ms &nbsp;&middot;&nbsp; same rail &nbsp;&middot;&nbsp; same total distance</span>
+    <span>ticks = key positions on the rail (the spacing chart)</span>
+    <span>all in-betweens are straight-line interpolation</span>
+  </div>
+</section>
+
+<h2>Spacing is timing</h2>
+<section class="panel tight">
+  <div class="rows measured" id="metrics">
+    <div class="head">key set</div>
+    <div class="head">speed range</div>
+    <div class="head">peak : mean</div>
+    <div class="head">worst step</div>
+    <div class="head">reads as</div>
+  </div>
+  <p class="hint" id="metric-note" style="margin:12px 0 0"></p>
+</section>
+
+<h2>The same three key sets as timing graphs</h2>
+<figure class="panel tight" style="margin:0">
+  <svg id="plot" viewBox="0 0 720 240" width="100%" role="img"
+       aria-label="position against time for the three keyframe sets"></svg>
+  <figcaption>x = time &nbsp;&middot;&nbsp; y = position on the rail &nbsp;&middot;&nbsp;
+    dots = keys &nbsp;&middot;&nbsp; a straight line between dots means linear in-betweens</figcaption>
+</figure>
+
+<h2>What to watch</h2>
+<ul class="watch">
+  <li><b>Row A is not wrong, it is unargued.</b> Nine keys, evenly spaced in value, evenly
+      spaced in time, linear in-betweens: the dot crosses the rail at 0.56 track/s and never
+      changes. Every in-between is correct and the move still reads as a machine, because
+      nothing in the spacing says where it started or where it is going.</li>
+  <li><b>Row B moved nothing but the values.</b> Same nine keys, same nine times, same total
+      distance, same linear interpolation. Because the keys now bunch towards both ends of
+      the rail, the speed goes 0.14 &rarr; 0.92 &rarr; 0.14 track/s: a 6.7&times; spread, and
+      a 0 at both ends in the limit. This is slow-in / slow-out, and it is a statement about
+      <i>spacing</i>, not about easing.</li>
+  <li><b>Slow-in / slow-out is not slower.</b> It covers the same distance in the same
+      1800 ms, so it must be faster somewhere: its peak is 0.92 track/s against row A's
+      constant 0.56 &mdash; 1.66&times; the average. Easing redistributes speed; it cannot
+      create or destroy the average.</li>
+  <li><b>Row C is what three keys cost you.</b> Keys at t = 0, 0.25, 1 force speeds of 1.11
+      and 0.37 track/s, so the dot hits a 3&times; corner at t = 0.25 and the eye reads a
+      hitch. This is not a defect of linear interpolation: a three-stop
+      <code>@keyframes</code> rule (or a three-point timeline in any editor) has exactly this
+      shape, because keyframe percentages are times and the values in between are lerped.</li>
+</ul>
+
+<div class="note">
+  <b>Do not ease twice.</b> An easing curve applied on top of eased spacing multiplies the
+  two: <code>cubic-bezier(.42,0,.58,1)</code> over row B gives the middle ~6.7&times; speed
+  spread of B <i>and</i> the 1.72&times; peak of the curve, and the start becomes static.
+  If the keys already carry the timing, the curve should be linear; if the motion is one
+  key pair, the curve has to carry everything.
+</div>
+
+<footer>
+  <span>REEL 03 · keyframe spacing · generated by tools/gen_reel_03.py</span>
+  <span><a href="index.html">← all reels</a> · <code>?still=1&amp;t=0.42</code> freezes a frame</span>
+</footer>
+</main>
+<script>
+
+const REEL = (() => {
+  // --- cubic-bezier(x1,y1,x2,y2) as a timing function -------------------
+  // CSS defines it parametrically: x(u), y(u) are cubics with control points
+  // (0,0),(x1,y1),(x2,y2),(1,1). We need y for a given x, i.e. solve
+  // x(u) = progress for u, then evaluate y(u).
+  const A = (a,b) => 1 - 3*b + 3*a;
+  const B = (a,b) => 3*b - 6*a;
+  const C = a => 3*a;
+  const calc = (u,a,b) => ((A(a,b)*u + B(a,b))*u + C(a))*u;
+  const slope = (u,a,b) => 3*A(a,b)*u*u + 2*B(a,b)*u + C(a);
+
+  function solve(x, x1, x2){
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    let u = x;
+    // Newton-Raphson: fast where the curve is well behaved.
+    for (let i = 0; i < 8; i++){
+      const s = slope(u, x1, x2);
+      if (Math.abs(s) < 1e-7) break;
+      const err = calc(u, x1, x2) - x;
+      if (Math.abs(err) < 1e-7) return u;
+      u -= err / s;
+      if (u < 0 || u > 1) break;
+    }
+    // Bisection fallback: slow but always converges.
+    let lo = 0, hi = 1; u = x;
+    for (let i = 0; i < 60; i++){
+      const v = calc(u, x1, x2);
+      if (Math.abs(v - x) < 1e-9) break;
+      if (v < x) lo = u; else hi = u;
+      u = (lo + hi) / 2;
+    }
+    return u;
+  }
+
+  // y at parameter x, plus dy/dx (the curve's *speed* at that instant).
+  function bezier(x, x1, y1, x2, y2){
+    const u = solve(x, x1, x2);
+    const dx = slope(u, x1, x2);
+    const dy = slope(u, y1, y2);
+    return { y: calc(u, y1, y2), slope: Math.abs(dx) < 1e-7 ? 0 : dy / dx };
+  }
+
+  // Max |dy/dx| over the whole curve — used to scale speed bars.
+  function maxSlope(x1, y1, x2, y2){
+    let m = 0;
+    for (let i = 0; i <= 2000; i++) m = Math.max(m, Math.abs(bezier(i/2000, x1,y1,x2,y2).slope));
+    return m || 1;
+  }
+
+  // Sample the curve as [x,y] pairs for plotting.
+  function samples(x1, y1, x2, y2, n = 120){
+    const out = [];
+    for (let i = 0; i <= n; i++){
+      const x = i / n;
+      out.push([x, bezier(x, x1, y1, x2, y2).y]);
+    }
+    return out;
+  }
+
+  // Interpolate a (time,value) table; linear between keys, clamped outside.
+  // This is what "in-betweening" means when the in-betweens are computed by
+  // a person (or a naive engine) rather than by a curve.
+  function polyline(keys, t){
+    if (t <= keys[0][0]) return keys[0][1];
+    const last = keys[keys.length - 1];
+    if (t >= last[0]) return last[1];
+    for (let i = 1; i < keys.length; i++){
+      const [t0,v0] = keys[i-1], [t1,v1] = keys[i];
+      if (t <= t1){
+        const f = (t - t0) / (t1 - t0);
+        return v0 + (v1 - v0) * f;
+      }
+    }
+    return last[1];
+  }
+
+  // Closed-form damped harmonic oscillator, re-based on every retarget.
+  //
+  //   m x'' + c (x' ) + k (x - T) = 0
+  //   w0 = sqrt(k/m), zeta = c / (2 sqrt(k m)), wd = w0 sqrt(1 - zeta^2)
+  //   x(t) = T + e^(-zeta w0 t) (A cos(wd t) + B sin(wd t))
+  //   A = x0 - T,  B = (v0 + zeta w0 A) / wd
+  //
+  // Exact in continuous time, so the printed numbers are properties of the
+  // parameters and not of a step size. tools/measure.py quantifies what a
+  // 2 kHz numerical integrator would have produced instead.
+  function spring(m, k, c){
+    const w0 = Math.sqrt(k / m);
+    const zeta = c / (2 * Math.sqrt(k * m));
+    const wd = w0 * Math.sqrt(1 - zeta * zeta);
+    const lam = zeta * w0;
+    function at(x0, v0, target, ms){
+      const t = Math.max(0, ms) / 1000;
+      const e = Math.exp(-lam * t);
+      const A = x0 - target, B = (v0 + lam * A) / wd;
+      const cos = Math.cos(wd * t), sin = Math.sin(wd * t);
+      return {
+        x: target + e * (A * cos + B * sin),
+        v: e * ((B * wd - lam * A) * cos - (A * wd + lam * B) * sin),
+      };
+    }
+    return {w0, zeta, wd, lam, at};
+  }
+
+  // Query string: ?still=1&t=0.42 paints one deterministic frame.
+  const q = new URLSearchParams(location.search);
+  const still = q.get('still') === '1';
+  const stillT = Math.max(0, Math.min(1, parseFloat(q.get('t') || '0.35')));
+
+  const nf = (v, d = 2) => (Math.abs(v) < 5e-5 ? 0 : v).toFixed(d);
+  const pct = v => (v * 100).toFixed(1) + '%';
+  const byId = id => document.getElementById(id);
+
+  return {bezier, maxSlope, samples, polyline, spring,
+          still, stillT, nf, pct, byId,
+          reduceMotion: matchMedia('(prefers-reduced-motion: reduce)').matches};
+})();
+
+
+// ---- the three key sets ------------------------------------------------
+const DUR = 1800, HOLD = 500, PAD = 72, DOT = 22, CYCLE = DUR;
+const easeInOut = x => REEL.bezier(x, 0.42, 0, 0.58, 1).y;
+
+const SETS = [
+  {name:'even spacing', spec:'9 keys · value = k/8', colour:'#58a6ff',
+   keys: Array.from({length:9}, (_, k) => [k / 8, k / 8])},
+  {name:'slow-in / slow-out', spec:'9 keys · value = easeInOut(k/8)', colour:'#3fb950',
+   keys: Array.from({length:9}, (_, k) => [k / 8, easeInOut(k / 8)])},
+  {name:'three keys', spec:'3 keys at t = 0, .25, 1', colour:'#f0883e',
+   keys: [[0, 0], [0.25, 0.5], [1, 1]]},
+];
+
+// segment table per set: the velocity is constant inside a segment because
+// the in-betweens are linear. Speed is in track widths per second.
+SETS.forEach(s => {
+  s.segs = [];
+  for (let i = 1; i < s.keys.length; i++){
+    const [t0, v0] = s.keys[i - 1], [t1, v1] = s.keys[i];
+    const slope = (v1 - v0) / (t1 - t0);
+    s.segs.push({t0, t1, v0, v1, slope, speed: slope / (DUR / 1000)});
+  }
+  s.speeds = s.segs.map(g => g.speed);
+  s.max = Math.max.apply(null, s.speeds);
+  s.min = Math.min.apply(null, s.speeds);
+  const mean = 1 / (DUR / 1000);                 // 1 track per 1.8 s
+  s.mean = mean;
+  // the largest discontinuous step in speed between neighbouring segments —
+  // piecewise-linear in-betweens can only change speed at a key, so this is
+  // the size of the worst corner the eye has to accept.
+  let step = 0;
+  for (let i = 1; i < s.segs.length; i++){
+    const a = s.segs[i - 1].speed, b = s.segs[i].speed;
+    if (Math.abs(b - a) > Math.abs(step)) step = b - a;
+  }
+  s.step = step;
+});
+
+function segAt(s, tau){
+  for (const g of s.segs) if (tau <= g.t1 + 1e-12) return g;
+  return s.segs[s.segs.length - 1];
+}
+
+// ---- measured table ----------------------------------------------------
+(function table(){
+  const box = REEL.byId('metrics');
+  const reads = ['mechanical', 'hand-drawn ease', 'hitch at each key'];
+  SETS.forEach((s, i) => {
+    box.insertAdjacentHTML('beforeend',
+      '<div class="cell label"><span class="swatch" style="background:' + s.colour + '"></span>' +
+        s.name + '</div>' +
+      '<div class="cell">' + (Math.abs(s.max - s.min) < 1e-9
+          ? REEL.nf(s.max, 2) + ' flat' : REEL.nf(s.min, 2) + '–' + REEL.nf(s.max, 2)) + ' tr/s</div>' +
+      '<div class="cell">' + REEL.nf(s.max / s.mean, 2) + '&times;</div>' +
+      '<div class="cell">' + (Math.abs(s.step) < 1e-9 ? 'none'
+          : (s.step > 0 ? '+' : '−') + REEL.nf(Math.abs(s.step), 2) + ' tr/s') + '</div>' +
+      '<div class="cell">' + reads[i] + '</div>');
+  });
+  REEL.byId('metric-note').textContent =
+    'mean speed is ' + REEL.nf(SETS[0].mean, 2) + ' tr/s for all three (1 track in 1800 ms) · ' +
+    'measured from the key times alone, so the numbers are checkable by hand';
+})();
+
+// ---- stage -------------------------------------------------------------
+const stage = REEL.byId('stage');
+const rows = SETS.map(s => {
+  const row = document.createElement('div');
+  row.className = 'tr';
+  row.innerHTML =
+    '<div class="name"><span class="swatch" style="background:' + s.colour + '"></span>' +
+      '<span><b>' + s.name + '</b><br><span class="code">' + s.spec + '</span></span></div>' +
+    '<div class="track"><div class="rail"></div><div class="goal"></div>' +
+      '<div class="dot" style="background:' + s.colour + '"></div></div>' +
+    '<div class="stack">' +
+      '<small>speed <b class="sv">0.00</b> tr/s <span class="seg"></span></small>' +
+      '<div class="bar"><i style="background:' + s.colour + '"></i></div>' +
+      '<small>position <b class="pv">0.0%</b></small>' +
+    '</div>';
+  stage.appendChild(row);
+  const track = row.querySelector('.track');
+  // the spacing chart: one tick per key, at the key's position on the rail
+  s.keys.forEach(([t, v], i) => {
+    const tick = document.createElement('div');
+    tick.className = 'tick' + (i === 0 || i === s.keys.length - 1 ? '' : ' k');
+    tick.dataset.v = v;
+    track.appendChild(tick);
+  });
+  return {
+    s, track,
+    dot: row.querySelector('.dot'),
+    pv: row.querySelector('.pv'),
+    sv: row.querySelector('.sv'),
+    seg: row.querySelector('.seg'),
+    bar: row.querySelector('.bar > i'),
+    ticks: Array.from(track.querySelectorAll('.tick')),
+    travel: 100,
+  };
+});
+
+const vMax = Math.max.apply(null, SETS.map(s => s.max));
+
+function geometry(){
+  rows.forEach(r => {
+    r.travel = Math.max(60, r.track.clientWidth - DOT - 2 * PAD);
+    r.dot.style.left = PAD + 'px';
+    r.ticks.forEach(t => { t.style.left = (PAD + parseFloat(t.dataset.v) * r.travel) + 'px'; });
+  });
+}
+
+// ---- plot --------------------------------------------------------------
+const plot = REEL.byId('plot');
+const L = 64, R = 700, TOP = 20, BOT = 196;
+const PX = t => L + t * (R - L);
+const PY = v => BOT - (v + 0.02) / 1.06 * (BOT - TOP);
+const svg = (n, a) => { const e = document.createElementNS('http://www.w3.org/2000/svg', n);
+  for (const k in a) e.setAttribute(k, a[k]); return e; };
+(function axes(){
+  plot.appendChild(svg('line', {x1:L, y1:BOT, x2:R, y2:BOT, stroke:'#26303b'}));
+  plot.appendChild(svg('line', {x1:L, y1:TOP, x2:L, y2:BOT, stroke:'#26303b'}));
+  [[0,'0'],[0.5,'0.5'],[1,'1']].forEach(([v, t]) => {
+    const e = svg('text', {x:L - 8, y:PY(v) + 4, fill:'#5b6673', 'font-size':'10',
+      'text-anchor':'end', 'font-family':'ui-monospace,monospace'});
+    e.textContent = t; plot.appendChild(e);
+  });
+  [[0,'0'],[0.5,'0.9s'],[1,'1.8s']].forEach(([t, s]) => {
+    const e = svg('text', {x:PX(t), y:BOT + 16, fill:'#5b6673', 'font-size':'10',
+      'text-anchor':'middle', 'font-family':'ui-monospace,monospace'});
+    e.textContent = s; plot.appendChild(e);
+  });
+})();
+
+rows.forEach(r => {
+  const d = r.s.keys.map(([t, v], i) => (i ? 'L' : 'M') + PX(t).toFixed(1) + ' ' + PY(v).toFixed(1)).join(' ');
+  plot.appendChild(svg('path', {d, fill:'none', stroke:r.s.colour, 'stroke-width':2, 'stroke-linejoin':'round'}));
+  r.s.keys.forEach(([t, v]) => plot.appendChild(
+    svg('circle', {cx:PX(t).toFixed(1), cy:PY(v).toFixed(1), r:3.2, fill:'#0b0f14',
+      stroke:r.s.colour, 'stroke-width':1.8})));
+  r.marker = svg('circle', {r:5, fill:r.s.colour, stroke:'#0b0f14', 'stroke-width':1.5,
+    opacity:0.95});
+  plot.appendChild(r.marker);
+});
+
+// ---- render ------------------------------------------------------------
+function draw(tau){
+  const ms = tau * DUR;
+  rows.forEach(r => {
+    const v = REEL.polyline(r.s.keys, tau);
+    const g = segAt(r.s, Math.max(1e-6, tau));
+    r.dot.style.transform = 'translateX(' + (v * r.travel).toFixed(1) + 'px)';
+    r.pv.textContent = REEL.pct(v);
+    r.sv.textContent = REEL.nf(g.speed, 2);
+    r.bar.style.width = Math.min(100, Math.abs(g.speed) / vMax * 100).toFixed(1) + '%';
+    r.seg.textContent = r.s.segs.length > 1 ? 'seg ' + (r.s.segs.indexOf(g) + 1) + '/' + r.s.segs.length : 'one segment';
+    r.marker.setAttribute('cx', PX(tau).toFixed(1));
+    r.marker.setAttribute('cy', PY(v).toFixed(1));
+  });
+  REEL.byId('clock').textContent = 't = ' + tau.toFixed(3) + ' \u00b7 ' + Math.round(ms) + ' / ' + DUR + ' ms';
+}
+
+// ---- clock -------------------------------------------------------------
+const btn = REEL.byId('play'), scrub = REEL.byId('scrub');
+let playing = false, clock = 0, last = null, raf = null, prevCyc = 0;
+function tick(now){
+  if (last === null) last = now;
+  const dt = Math.min(now - last, 100);
+  last = now;
+  if (playing){
+    clock += dt;
+    const cyc = clock % (DUR + HOLD);
+    if (cyc < prevCyc) clock = cyc;
+    prevCyc = cyc;
+    const tau = Math.min(1, cyc / DUR);
+    draw(tau);
+    scrub.value = Math.round(tau * 1000);
+  }
+  raf = requestAnimationFrame(tick);
+}
+function play(){ playing = true; btn.textContent = 'Pause'; if (raf === null){ last = null; raf = requestAnimationFrame(tick); } }
+function pause(){ playing = false; btn.textContent = 'Play'; }
+
+btn.addEventListener('click', () => (playing ? pause() : play()));
+scrub.addEventListener('input', () => {
+  pause();
+  clock = scrub.value / 1000 * DUR; prevCyc = clock;
+  draw(scrub.value / 1000);
+});
+addEventListener('keydown', e => {
+  if (e.code === 'Space' && e.target.tagName !== 'INPUT'){ e.preventDefault(); playing ? pause() : play(); }
+});
+addEventListener('resize', () => { geometry(); draw(Math.min(1, (clock % (DUR + HOLD)) / DUR)); });
+
+geometry();
+if (REEL.still || REEL.reduceMotion){
+  pause(); clock = REEL.stillT * DUR;
+  draw(REEL.stillT); scrub.value = Math.round(REEL.stillT * 1000);
+} else {
+  play();
+}
+
+</script>
+</body>
+</html>

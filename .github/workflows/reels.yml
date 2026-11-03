@@ -1,0 +1,57 @@
+name: reels
+
+on:
+  push:
+    branches: [main, "reel/**"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: generated reels + screenshots
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Reels and docs match their generators
+        # Also enforces the purity rules: inline CSS/JS only, no CDN, no remote
+        # fonts or images. A reel that stops being self-contained fails here.
+        run: python3 tools/build.py --check
+
+      # --- browser, for the screenshot + cross-check steps -----------------
+      # Deliberately not fatal: if the runner cannot produce a browser, the
+      # steps below say so in the artefact instead of pretending to pass.
+      - name: Install Playwright + Chromium
+        id: browser
+        continue-on-error: true
+        run: |
+          python3 -m pip install --quiet --upgrade pip
+          python3 -m pip install --quiet playwright
+          python3 -m playwright install --with-deps chromium
+
+      - name: Cross-check page readouts against tools/measure.py
+        run: python3 tools/verify.py
+
+      - name: Screenshot each reel (frozen frame)
+        run: python3 tools/shoot.py --out build/shots --t 0.42 --scale 2
+
+      - name: Upload screenshots
+        uses: actions/upload-artifact@v4
+        with:
+          name: reel-screenshots
+          path: build/shots
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Note when the device step was deferred
+        if: steps.browser.outcome == 'failure'
+        run: |
+          echo "::warning::Chromium could not be installed on this runner."
+          echo "Screenshots are missing; build/shots/DEFERRED.md explains the gap." >> "$GITHUB_STEP_SUMMARY"
