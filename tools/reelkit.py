@@ -1,0 +1,284 @@
+"""reelkit — the shared shell every REEL study is built from.
+
+Design rules this module enforces (they are the point of the project):
+
+1. A reel is ONE html file. Inline <style>, inline <script>, no network at
+   runtime, no CDN, no fonts, no images. It must open from `file://` on a
+   laptop with the wifi off.
+2. A reel is GENERATED, never hand-edited. The generators under tools/ are
+   the only writers of reels/*.html, so `tools/build.py --check` can prove
+   the committed HTML is byte-identical to its source.
+3. Every reel exposes a deterministic frame: `?still=1&t=<0..1>` paints one
+   instant and does not start a clock. Headless screenshots use that, so a
+   screenshot is a fact about the reel rather than a race with rAF.
+4. Numbers the reader is asked to compare are printed, not implied: progress,
+   normalised speed, settling time, segment speeds. If a claim is in the
+   prose, a readout next to it should be able to contradict it.
+
+Nothing here is clever. It is a stylesheet, a page shell and ~60 lines of
+bezier maths that all three reels share so their clocks and curves agree.
+"""
+
+from __future__ import annotations
+
+import pathlib
+
+ROOT = pathlib.Path(__file__).resolve().parent.parent
+REELS = ROOT / "reels"
+
+# --------------------------------------------------------------------------
+# CSS. Kept in one place so the three reels look like one series.
+# --------------------------------------------------------------------------
+
+CSS = """
+:root{
+  --bg:#0b0f14; --panel:#131a22; --panel2:#0f151c; --line:#26303b;
+  --ink:#e6edf3; --dim:#8b98a5; --faint:#5b6673;
+  --c1:#58a6ff; --c2:#3fb950; --c3:#f0883e; --bad:#f85149;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg); color:var(--ink);
+  font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  padding:28px 20px 64px;
+}
+main{max-width:960px;margin:0 auto}
+header.top{border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:22px}
+.series{font:600 11px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+h1{font-size:23px;line-height:1.25;margin:8px 0 6px;font-weight:650;letter-spacing:-.01em}
+.lede{color:var(--dim);margin:0;max-width:70ch}
+h2{font-size:14px;margin:30px 0 10px;font-weight:640;letter-spacing:.02em;
+   text-transform:uppercase;color:var(--dim);font-family:var(--mono)}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px 18px}
+.panel.tight{padding:12px 14px}
+
+/* controls */
+.controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:20px 0 4px}
+button{
+  font:600 13px/1 inherit;color:var(--ink);background:#1c2632;
+  border:1px solid #35424f;border-radius:7px;padding:8px 13px;cursor:pointer;
+}
+button:hover{background:#243040}
+button:active{transform:translateY(1px)}
+button.secondary{background:transparent;color:var(--dim)}
+input[type=range]{flex:1;min-width:140px;accent-color:var(--c1)}
+.hint{color:var(--faint);font:12px/1.4 var(--mono)}
+
+/* a track: one moving subject on a shared rail */
+.track{position:relative;height:44px;margin:6px 0 2px;
+  background:linear-gradient(90deg,#0d141b,#0d141b) padding-box;border-radius:7px;
+  border:1px solid #1b232d;overflow:visible}
+.rail{position:absolute;left:0;right:0;top:50%;height:1px;background:#243040}
+.dot{position:absolute;top:50%;width:22px;height:22px;margin:-11px 0 0 0;border-radius:50%;
+  will-change:transform;box-shadow:0 0 0 1px rgba(0,0,0,.5)}
+.goal{position:absolute;top:50%;width:1px;height:26px;margin-top:-13px;background:#3a4756}
+
+/* readout grid */
+.rows{display:grid;grid-template-columns:minmax(140px,1.05fr) repeat(3,minmax(64px,.62fr)) 1.1fr;
+  gap:0 10px;align-items:center}
+.rows .head{font:600 10px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;
+  color:var(--faint);padding:4px 0}
+.rows .cell{font:13px/1 var(--mono);color:var(--ink);padding:9px 0;border-top:1px solid #1b232d}
+.rows .label{display:flex;align-items:center;gap:8px;font-weight:600}
+.swatch{width:9px;height:9px;border-radius:2px;flex:none}
+.code{font-family:var(--mono);font-size:11px;color:var(--dim)}
+.bar{position:relative;height:6px;background:#1b232d;border-radius:3px;overflow:hidden}
+.bar > i{position:absolute;left:0;top:0;bottom:0;border-radius:3px;width:0}
+.stack{display:flex;flex-direction:column;gap:2px}
+.stack small{font:11px/1.2 var(--mono);color:var(--faint)}
+
+/* legend + callouts */
+.legend{display:flex;gap:16px;flex-wrap:wrap;color:var(--dim);font:12px/1.4 var(--mono);margin-top:10px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.note{border-left:2px solid var(--c1);padding:2px 0 2px 12px;color:var(--dim);
+  margin:18px 0;max-width:74ch}
+.note.warn{border-left-color:var(--c3)}
+.note b{color:var(--ink);font-weight:640}
+.watch{list-style:none;padding:0;margin:10px 0 0;display:grid;gap:9px}
+.watch li{position:relative;padding-left:18px;color:var(--dim);max-width:78ch}
+.watch li::before{content:"";position:absolute;left:2px;top:8px;width:6px;height:6px;
+  border-radius:50%;background:var(--c1);opacity:.75}
+.watch b{color:var(--ink)}
+svg{display:block;overflow:visible}
+figcaption{color:var(--faint);font:11px/1.5 var(--mono);margin-top:8px}
+footer{margin-top:34px;padding-top:14px;border-top:1px solid var(--line);
+  color:var(--faint);font:11px/1.6 var(--mono);display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+footer a{color:var(--dim);text-decoration:none;border-bottom:1px dotted #3a4756}
+@media (max-width:640px){
+  .rows{grid-template-columns:1fr 1fr}
+  .rows .head:nth-child(4),.rows .cell:nth-child(4){display:none}
+}
+""".strip()
+
+# --------------------------------------------------------------------------
+# Shared JS: bezier evaluation + tiny formatting helpers.
+#
+# The reels deliberately do NOT use CSS transitions/animations or Web
+# Animations. Every position is computed from an explicit curve so that the
+# number on screen and the number in docs/REELS.md are the same number, and
+# so a screenshot at t=0.42 means something.
+# --------------------------------------------------------------------------
+
+JS_COMMON = r"""
+const REEL = (() => {
+  // --- cubic-bezier(x1,y1,x2,y2) as a timing function -------------------
+  // CSS defines it parametrically: x(u), y(u) are cubics with control points
+  // (0,0),(x1,y1),(x2,y2),(1,1). We need y for a given x, i.e. solve
+  // x(u) = progress for u, then evaluate y(u).
+  const A = (a,b) => 1 - 3*b + 3*a;
+  const B = (a,b) => 3*b - 6*a;
+  const C = a => 3*a;
+  const calc = (u,a,b) => ((A(a,b)*u + B(a,b))*u + C(a))*u;
+  const slope = (u,a,b) => 3*A(a,b)*u*u + 2*B(a,b)*u + C(a);
+
+  function solve(x, x1, x2){
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    let u = x;
+    // Newton-Raphson: fast where the curve is well behaved.
+    for (let i = 0; i < 8; i++){
+      const s = slope(u, x1, x2);
+      if (Math.abs(s) < 1e-7) break;
+      const err = calc(u, x1, x2) - x;
+      if (Math.abs(err) < 1e-7) return u;
+      u -= err / s;
+      if (u < 0 || u > 1) break;
+    }
+    // Bisection fallback: slow but always converges.
+    let lo = 0, hi = 1; u = x;
+    for (let i = 0; i < 60; i++){
+      const v = calc(u, x1, x2);
+      if (Math.abs(v - x) < 1e-9) break;
+      if (v < x) lo = u; else hi = u;
+      u = (lo + hi) / 2;
+    }
+    return u;
+  }
+
+  // y at parameter x, plus dy/dx (the curve's *speed* at that instant).
+  function bezier(x, x1, y1, x2, y2){
+    const u = solve(x, x1, x2);
+    const dx = slope(u, x1, x2);
+    const dy = slope(u, y1, y2);
+    return { y: calc(u, y1, y2), slope: Math.abs(dx) < 1e-7 ? 0 : dy / dx };
+  }
+
+  // Max |dy/dx| over the whole curve — used to scale speed bars.
+  function maxSlope(x1, y1, x2, y2){
+    let m = 0;
+    for (let i = 0; i <= 2000; i++) m = Math.max(m, Math.abs(bezier(i/2000, x1,y1,x2,y2).slope));
+    return m || 1;
+  }
+
+  // Sample the curve as [x,y] pairs for plotting.
+  function samples(x1, y1, x2, y2, n = 120){
+    const out = [];
+    for (let i = 0; i <= n; i++){
+      const x = i / n;
+      out.push([x, bezier(x, x1, y1, x2, y2).y]);
+    }
+    return out;
+  }
+
+  // Interpolate a (time,value) table; linear between keys, clamped outside.
+  // This is what "in-betweening" means when the in-betweens are computed by
+  // a person (or a naive engine) rather than by a curve.
+  function polyline(keys, t){
+    if (t <= keys[0][0]) return keys[0][1];
+    const last = keys[keys.length - 1];
+    if (t >= last[0]) return last[1];
+    for (let i = 1; i < keys.length; i++){
+      const [t0,v0] = keys[i-1], [t1,v1] = keys[i];
+      if (t <= t1){
+        const f = (t - t0) / (t1 - t0);
+        return v0 + (v1 - v0) * f;
+      }
+    }
+    return last[1];
+  }
+
+  // Closed-form damped harmonic oscillator, re-based on every retarget.
+  //
+  //   m x'' + c (x' ) + k (x - T) = 0
+  //   w0 = sqrt(k/m), zeta = c / (2 sqrt(k m)), wd = w0 sqrt(1 - zeta^2)
+  //   x(t) = T + e^(-zeta w0 t) (A cos(wd t) + B sin(wd t))
+  //   A = x0 - T,  B = (v0 + zeta w0 A) / wd
+  //
+  // Exact in continuous time, so the printed numbers are properties of the
+  // parameters and not of a step size. tools/measure.py quantifies what a
+  // 2 kHz numerical integrator would have produced instead.
+  function spring(m, k, c){
+    const w0 = Math.sqrt(k / m);
+    const zeta = c / (2 * Math.sqrt(k * m));
+    const wd = w0 * Math.sqrt(1 - zeta * zeta);
+    const lam = zeta * w0;
+    function at(x0, v0, target, ms){
+      const t = Math.max(0, ms) / 1000;
+      const e = Math.exp(-lam * t);
+      const A = x0 - target, B = (v0 + lam * A) / wd;
+      const cos = Math.cos(wd * t), sin = Math.sin(wd * t);
+      return {
+        x: target + e * (A * cos + B * sin),
+        v: e * ((B * wd - lam * A) * cos - (A * wd + lam * B) * sin),
+      };
+    }
+    return {w0, zeta, wd, lam, at};
+  }
+
+  // Query string: ?still=1&t=0.42 paints one deterministic frame.
+  const q = new URLSearchParams(location.search);
+  const still = q.get('still') === '1';
+  const stillT = Math.max(0, Math.min(1, parseFloat(q.get('t') || '0.35')));
+
+  const nf = (v, d = 2) => (Math.abs(v) < 5e-5 ? 0 : v).toFixed(d);
+  const pct = v => (v * 100).toFixed(1) + '%';
+  const byId = id => document.getElementById(id);
+
+  return {bezier, maxSlope, samples, polyline, spring,
+          still, stillT, nf, pct, byId,
+          reduceMotion: matchMedia('(prefers-reduced-motion: reduce)').matches};
+})();
+"""
+
+
+def page(*, reel_id: str, number: str, title: str, lede: str, body: str,
+         script: str, footer_note: str, extra_css: str = "", nav: bool = True) -> str:
+    """Wrap a reel's body + script in the shared shell. Pure string in, string out."""
+    nav_html = ('<a href="index.html">\u2190 all reels</a> \u00b7 '
+                '<code>?still=1&amp;t=0.42</code> freezes a frame') if nav else (
+                '<code>?still=1&amp;t=0.42</code> freezes a frame')
+    return f"""<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{title} · REEL {number}</title>
+<!-- GENERATED FILE — edit tools/gen_reel_{reel_id.split('-')[0]}.py, not this. -->
+<style>
+{CSS}
+{extra_css}
+</style>
+</head>
+<body>
+<main>
+<header class="top">
+  <div class="series">REEL · research-anim · study {number}</div>
+  <h1>{title}</h1>
+  <p class="lede">{lede}</p>
+</header>
+
+{body}
+<footer>
+  <span>{footer_note}</span>
+  <span>{nav_html}</span>
+</footer>
+</main>
+<script>
+{JS_COMMON}
+{script}
+</script>
+</body>
+</html>
+"""
